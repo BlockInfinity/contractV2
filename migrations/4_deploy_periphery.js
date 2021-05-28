@@ -32,6 +32,9 @@ const ERC20 = artifacts.require("InitializableERC20");
 const CustomERC20 = artifacts.require("CustomERC20");
 
 const CurveAdapter = artifacts.require("CurveUnderlyingAdapter");
+const DODOV1Adapter = artifacts.require("DODOV1Adapter");
+const DODOV2Adapter = artifacts.require("DODOV2Adapter");
+const UniAdapter = artifacts.require("UniAdapter");
 
 module.exports = async (deployer, network, accounts) => {
     let CONFIG = GetConfig(network, accounts)
@@ -40,6 +43,8 @@ module.exports = async (deployer, network, accounts) => {
     let WETHAddress = CONFIG.WETH;
     let DODOTokenAddress = CONFIG.DODO;
     let DODOApproveProxyAddress = CONFIG.DODOApproveProxy;
+
+    let DODOSellHelperAddress = CONFIG.DODOSellHelper;
 
     let DspTemplateAddress = CONFIG.DSP;
     let DspFactoryAddress = CONFIG.DSPFactory;
@@ -413,6 +418,7 @@ module.exports = async (deployer, network, accounts) => {
     }
 
     if(deploySwitch.test_ADAPTER) {
+        /*
         logger.log("====================================================");
         logger.log("network type: " + network);
         logger.log("Deploy time: " + new Date().toLocaleString());
@@ -421,5 +427,18 @@ module.exports = async (deployer, network, accounts) => {
         await deployer.deploy(CurveAdapter);
 
         logger.log("test_Adapter Address: ", CurveAdapter.address);
+        */
+
+        logger.log("====================================================");
+        logger.log("network type: " + network);
+        logger.log("Deploy time: " + new Date().toLocaleString());
+        logger.log("Deploy type: anothertest - Adapter");
+
+        await deployer.deploy(DODOV1Adapter, DODOSellHelperAddress)
+        logger.log("DODOV1Adapter Address: ", DODOV1Adapter.address);
+        await deployer.deploy(DODOV2Adapter)
+        logger.log("DODOV2Adapter Address: ", DODOV2Adapter.address);
+        await deployer.deploy(UniAdapter)
+        logger.log("UniAdapter Address: ", UniAdapter.address);
     }
 };

@@ -486,32 +486,3 @@ Deploy time: 2021/6/2 上午11:20:42
 Deploy type: FeeRateImpl
 FeeRateImplAddress:  0x4F57F6929E58AE564F6AB090fE0AEEcb39B0f270
 Init feeRateImpl Tx: 0xbafcadf128e2d5fbab1927e32bc87d0db8d905b7bee5c8e3edc40f137942e6a9
-====================================================
-network type: bsclive
-Deploy time: 2021/6/3 下午2:24:18
-Deploy type: DODORouteProxy
-DODORouteProxy Address:  0x6B3D817814eABc984d51896b1015C0b89E9737Ca
-====================================================
-network type: live
-Deploy time: 2021/6/3 下午2:29:00
-Deploy type: DODORouteProxy
-DODORouteProxy Address:  0xa2398842F37465f89540430bDC00219fA9E4D28a
-====================================================
-network type: arb
-Deploy time: 2021/6/3 下午4:23:04
-Deploy type: DODORouteProxy
-DODORouteProxy Address:  0x3E64F18168651d140AaE57e0cF325874d066bA9E
-====================================================
-network type: rinkeby
-Deploy time: 2021/6/29 上午10:05:29
-Deploy type: ERC20V2Factory
-CustomERC20Address:  0x0Cd57DC8367362314C510446FD106B66989Eb81a
-ERC20V2FactoryAddress:  0x6659fB6fc609e8c5159Aaccb80e49cCB8F64442a
-Init ERC20V2Factory Tx: 0xbeb3138087efe8f2c41805c8b7a4fe94b17f8abbef4e5d739da8125d1e44e504
-====================================================
-network type: kovan
-Deploy time: 2021/6/29 上午10:30:59
-Deploy type: ERC20V2Factory
-CustomERC20Address:  0x3a0e0F2EDFC0e96BD700815f953Bcb6d8a6FF0AB
-ERC20V2FactoryAddress:  0xce4Bdc3151bF9F9dcADAED961a65D32f7bAC5460
-Init ERC20V2Factory Tx: 0x5c03786d3e12b5c9532429f83c548a892c2d1ec613a44db81a9595e3bf017490
