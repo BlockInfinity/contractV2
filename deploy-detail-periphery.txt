@@ -486,3 +486,16 @@ Deploy time: 2021/6/2 上午11:20:42
 Deploy type: FeeRateImpl
 FeeRateImplAddress:  0x4F57F6929E58AE564F6AB090fE0AEEcb39B0f270
 Init feeRateImpl Tx: 0xbafcadf128e2d5fbab1927e32bc87d0db8d905b7bee5c8e3edc40f137942e6a9
+====================================================
+network type: rinkeby
+Deploy time: 2021/7/5 上午8:15:47
+Deploy type: anothertest - Adapter
+DODOV1Adapter Address:  0xB89CCC740c9E3BE8712a2174b648a95C6978B836
+DODOV2Adapter Address:  0x003B18357460e789e711849749A793c430d14f97
+UniAdapter Address:  0x4553E5CF08E8E5229caB9b092e76cB92cde672BA
+UniV3Adapter Address:  0xc6D718Fa2bb39CCDf29a640361E42656DB1EBBD9
+====================================================
+network type: rinkeby
+Deploy time: 2021/7/5 下午5:34:29
+Deploy type: anothertest - Adapter
+UniV3Adapter Address:  0xC9143e54021f4a6d33b9b89DBB9F458AaEdd56FB

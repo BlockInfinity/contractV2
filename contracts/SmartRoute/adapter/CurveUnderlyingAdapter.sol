@@ -14,7 +14,7 @@ import {SafeMath} from "../../lib/SafeMath.sol";
 import {UniversalERC20} from "../lib/UniversalERC20.sol";
 import {SafeERC20} from "../../lib/SafeERC20.sol";
 
-// for two tokens
+// for two tokens; to adapter like dodo V1
 contract CurveUnderlyingAdapter is IDODOAdapter {
     using SafeMath for uint;
 
