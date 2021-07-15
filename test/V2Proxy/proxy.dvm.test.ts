@@ -196,8 +196,11 @@ async function getQuantity(ctx, dvm, trader, price) {
         console.log(`price: ${price}`)
         console.log(`priceOfQueriedAmount: ${priceOfQueriedAmount}`)
         console.log(`Precision of price: ${Math.abs(price - priceOfQueriedAmount)/price}`)
-		if(Math.abs(price - priceOfQueriedAmount)/price < 0.01)
-			return (mode == 'sell' ? -1 : 1) * receiveQuoteAmount;
+		if(Math.abs(price - priceOfQueriedAmount)/price < 0.01) {
+            console.log(`Expected loss: ${payAmount}`)
+            console.log(`Expected gain: ${receiveQuoteAmount}`)
+			return (mode == 'sell' ? -1 : 1) * payAmount;
+        }
 	}
 
     console.error('Precision failure.');
