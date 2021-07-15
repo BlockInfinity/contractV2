@@ -262,7 +262,7 @@ async function trade(ctx, dvm, trader, tradeQuantity) {
     console.log(`poolQuotePrior: ${poolQuotePrior}`)
 
 	const dodoPairs = [
-		dvm
+		dvm.options.address
 	]
 	const directions = tradeQuantity > 0 ? 0 : 1;
     console.log(`ctx.DODOProxyV2: ${ctx.DODOProxyV2}`)
