@@ -271,7 +271,7 @@ async function trade(ctx, dvm, trader, tradeQuantity) {
 	await ctx.DODOProxyV2.methods.dodoSwapV2TokenToToken(
 		fromToken.options.address,
 		toToken.options.address,
-		tradeQuantity,
+		Math.abs(tradeQuantity),
 		0,
 		dodoPairs,
 		directions,
