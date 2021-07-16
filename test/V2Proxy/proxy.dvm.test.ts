@@ -14,7 +14,7 @@ import * as contracts from '../utils/Contracts';
 import { Contract } from 'web3-eth-contract';
 
 const fs = require('fs');
-const numOfTrades = 20;
+const numOfTrades = 100;
 // const poolParameter
 // const realPriceRandomFunction Parameter,
 
@@ -182,7 +182,7 @@ describe("DODOProxyV2.0", () => {
 		it("benchmarks", async () => {
 
 			for (let i = 0; i < numOfTrades; i++) {
-				//const tradeQuantity = await getQuantity(ctx, dvm, trader, realPrices[i]);
+				/*const tradeQuantity = */await getQuantity(ctx, dvm, trader, realPrices[i]);
 				const tradeQuantity = new BigNumber(-8000);
 				console.log('!!!!!!!!!!!!!!0')
 				console.log(realPrices[i])
@@ -213,44 +213,57 @@ describe("DODOProxyV2.0", () => {
  */
 async function getQuantity(ctx, dvm, trader, price) : Promise<BigNumber> {
 	const UNDERFLOW_PROTECTOR = 10000;
-	let priceOfQueriedAmount = new BigNumber(1);
-	let payAmount = new BigNumber(UNDERFLOW_PROTECTOR);
 
 	// Try to sell 1 base (buying quote) to see whether the asymptotic price is above or below the
 	// intended price.
 	const {receiveQuoteAmount, mtFee} = await dvm.methods.querySellBase(trader, UNDERFLOW_PROTECTOR).call();
 	const mode = receiveQuoteAmount/UNDERFLOW_PROTECTOR > price ? 'sell' : 'buy'; // Sell or buy quote (not base).
 	const queryFunction = mode == 'sell' ? dvm.methods.querySellQuote : dvm.methods.querySellBase;
-    let i = 1000;
+    let i = 100;
+	let leftBound = new BigNumber(0);
+	let rightBound = new BigNumber(await (mode === 'sell' ? tao : usdc).methods.balanceOf(trader).call());
+	let approximateQuantity = leftBound.plus(rightBound).dividedBy(2).integerValue(BigNumber.ROUND_FLOOR);
 	while(true) {
+		console.log(`mode: ${mode}`)
+		console.log(`range: [${leftBound}, ${rightBound}]`)
 		i--;
 		if(i < 0) {
             console.error('Too many loop iterations.');
 			process.exit(1);
         }
-		if((new BigNumber(price)).comparedTo(priceOfQueriedAmount) == 1)
-			payAmount = (new BigNumber(1.11)).times(payAmount);
-		else
-			payAmount = (new BigNumber(0.9)).times(payAmount);
-		payAmount = payAmount.integerValue(BigNumber.ROUND_FLOOR);
-        if(payAmount.comparedTo(UNDERFLOW_PROTECTOR) == -1)
+        if(approximateQuantity.comparedTo(UNDERFLOW_PROTECTOR) == -1)
             return new BigNumber(0);
 
         try {
-		    const {receiveQuoteAmount, mtFee} = await queryFunction(trader, payAmount.toString()).call();
-            if(receiveQuoteAmount == 0) {
+		    const {receiveQuoteAmount, mtFee} = await queryFunction(trader, approximateQuantity.toString()).call();
+            if(receiveQuoteAmount === undefined || receiveQuoteAmount.comparedTo(0) === 0) {
                 console.error('receiveQuoteAmount is zero.');
                 process.exit(1);
             }
 
-		    priceOfQueriedAmount = (payAmount.minus(mtFee)).dividedBy(receiveQuoteAmount);
+		    const priceOfQueriedAmount = (approximateQuantity.minus(mtFee)).dividedBy(receiveQuoteAmount);
+			console.log(`prices: ${price}, ${priceOfQueriedAmount}`)
 
-		    // Check whether the prices are approximately equal.
-		    if((((new BigNumber(price)).minus(priceOfQueriedAmount)).absoluteValue().dividedBy(new BigNumber(price))).comparedTo(0.01) == -1) {
-                console.log(`Expected loss: ${payAmount}`)
+		    // Check whether the prices are approximately equal or the trader's funds would be exhausted
+			// by the trade.
+		    if((((new BigNumber(price)).minus(priceOfQueriedAmount)).absoluteValue().dividedBy(new BigNumber(price))).comparedTo(0.01) == -1 || rightBound.minus(leftBound).comparedTo(new BigNumber(1)) <= 0) {
+                console.log(`Expected loss: ${approximateQuantity}`)
                 console.log(`Expected gain: ${receiveQuoteAmount}`)
-			    return payAmount.times(mode == 'sell' ? -1 : 1);
+			    return approximateQuantity.times(mode == 'sell' ? -1 : 1);
             }
+
+			if(priceOfQueriedAmount.comparedTo(price) === 1) {
+				if(mode === 'buy')
+					rightBound = approximateQuantity;
+				else
+					leftBound = approximateQuantity;
+			} else {
+				if(mode === 'buy')
+					leftBound = approximateQuantity;
+				else
+					rightBound = approximateQuantity;
+			}
+			approximateQuantity = leftBound.plus(rightBound).dividedBy(2).integerValue(BigNumber.ROUND_FLOOR);
         } catch(e) {
             const contractErrorObject = e.data[Object.keys(e.data)[0]];
             if(contractErrorObject.error === 'revert' && contractErrorObject.reason === 'TARGET_IS_ZERO') {
