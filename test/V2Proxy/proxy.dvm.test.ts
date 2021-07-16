@@ -232,19 +232,29 @@ async function getQuantity(ctx, dvm, trader, price) : Promise<BigNumber> {
         if(payAmount.comparedTo(UNDERFLOW_PROTECTOR) == -1)
             return new BigNumber(0);
 
-		const {receiveQuoteAmount, mtFee} = await queryFunction(trader, payAmount.toString()).call();
-        if(receiveQuoteAmount == 0) {
-            console.error('receiveQuoteAmount is zero.');
-            process.exit(1);
-        }
+        try {
+		    const {receiveQuoteAmount, mtFee} = await queryFunction(trader, payAmount.toString()).call();
+            if(receiveQuoteAmount == 0) {
+                console.error('receiveQuoteAmount is zero.');
+                process.exit(1);
+            }
 
-		priceOfQueriedAmount = (payAmount.minus(mtFee)).dividedBy(receiveQuoteAmount);
+		    priceOfQueriedAmount = (payAmount.minus(mtFee)).dividedBy(receiveQuoteAmount);
 
-		// Check whether the prices are approximately equal.
-		if((((new BigNumber(price)).minus(priceOfQueriedAmount)).absoluteValue().dividedBy(new BigNumber(price))).comparedTo(0.01) == -1) {
-            console.log(`Expected loss: ${payAmount}`)
-            console.log(`Expected gain: ${receiveQuoteAmount}`)
-			return payAmount.times(mode == 'sell' ? -1 : 1);
+		    // Check whether the prices are approximately equal.
+		    if((((new BigNumber(price)).minus(priceOfQueriedAmount)).absoluteValue().dividedBy(new BigNumber(price))).comparedTo(0.01) == -1) {
+                console.log(`Expected loss: ${payAmount}`)
+                console.log(`Expected gain: ${receiveQuoteAmount}`)
+			    return payAmount.times(mode == 'sell' ? -1 : 1);
+            }
+        } catch(e) {
+            const contractErrorObject = e.data[Object.keys(e.data)[0]];
+            if(contractErrorObject.error === 'revert' && contractErrorObject.reason === 'TARGET_IS_ZERO') {
+                // Return 0, meaning that no trade will be executed.
+                return new BigNumber(0);
+            } else {
+                throw new Error(e);
+            }
         }
 	}
 
