@@ -14,13 +14,14 @@ import * as contracts from '../utils/Contracts';
 import { Contract } from 'web3-eth-contract';
 
 const fs = require('fs');
-const numOfTrades = 2;
+const numOfTrades = 20;
 // const poolParameter
 // const realPriceRandomFunction Parameter,
 
-const startPrice = 120;
-const endPrice = 80;
+const startPrice = 1.1;
+const endPrice = 0.6;
 const realPrices = initializeRealPrices(numOfTrades, startPrice, endPrice);
+console.log(realPrices)
 const numOfTokenInPool = [new BigNumber(0)];
 const numOfUsdcInPool = [new BigNumber(0)];
 const params = null;
@@ -270,17 +271,24 @@ function randomExponential(rate, randomUniform) {
 function seasonalTrend(numOfTrades, startPrice, endPrice) {
     let trend = new Array(numOfTrades);
     for (let i = 0; i < numOfTrades; i++) {
-        trend[i] = i * ((startPrice - endPrice) / numOfTrades);
+        trend[i] = startPrice - i * ((startPrice - endPrice) / (numOfTrades-1));
     }
     return trend;
 }
 
+function randn_bm() {
+    var u = 0, v = 0;
+    while(u === 0) u = Math.random(); //Converting [0,1) to (0,1)
+    while(v === 0) v = Math.random();
+    return Math.sqrt( -2.0 * Math.log( u ) ) * Math.cos( 2.0 * Math.PI * v );
+}
+
 function initializeRealPrices(numOfTrades, startPrice, endPrice) {
-    let realPrices = new Array(numOfTrades);
+    const realPrices = new Array(numOfTrades);
+	const seasonalTrendArr = seasonalTrend(numOfTrades, startPrice, endPrice);
+	console.log(seasonalTrendArr)
     for (let i = 0; i < numOfTrades; i++) {
-        realPrices[i] =
-            /*randomExponential(1, false) * */
-                (startPrice - seasonalTrend(numOfTrades, startPrice, endPrice)[i]);
+        realPrices[i] = seasonalTrendArr[i] * (1 + .05*randn_bm());
     }
     return realPrices;
 }
@@ -328,7 +336,6 @@ async function trade(ctx, dvm, trader, tradeQuantity, dvm_DODO_USDT) {
 		fromToken.options.address,
 		toToken.options.address,
 		(new BigNumber(Math.abs(tradeQuantity).toString())).toString(),
-        //decimalStr("500"),
 		1,
 		dodoPairs,
 		directions,
