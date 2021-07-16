@@ -18,12 +18,12 @@ const numOfTrades = 20;
 // const poolParameter
 // const realPriceRandomFunction Parameter,
 
-const startPrice = 3;
+const startPrice = 5;
 const endPrice = 0.6;
 const realPrices = initializeRealPrices(numOfTrades, startPrice, endPrice);
 console.log(realPrices)
-const numOfTokenInPool = [new BigNumber(0)];
-const numOfUsdcInPool = [new BigNumber(0)];
+const numOfTaoInPool = [];
+const numOfUsdcInPool = [];
 const params = null;
 let dvm;
 let usdc;
@@ -182,19 +182,23 @@ describe("DODOProxyV2.0", () => {
 		it("benchmarks", async () => {
 
 			for (let i = 0; i < numOfTrades; i++) {
-				const tradeQuantity = await getQuantity(ctx, dvm, trader, realPrices[i]);
+				//const tradeQuantity = await getQuantity(ctx, dvm, trader, realPrices[i]);
+				const tradeQuantity = new BigNumber(-8000);
 				console.log('!!!!!!!!!!!!!!0')
 				console.log(realPrices[i])
 				console.log(tradeQuantity)
 				const tradeResult = await trade(ctx, dvm, trader, tradeQuantity, dvm_DODO_USDT);
 				// Save tradeResult
-				numOfTokenInPool.push(numOfTokenInPool[i].plus(tradeResult.quoteGained));
-				numOfUsdcInPool.push(numOfUsdcInPool[i].plus(tradeResult.baseGained));
+//				numOfTokenInPool.push(numOfTokenInPool[i].plus(tradeResult.quoteGained));
+//				numOfUsdcInPool.push(numOfUsdcInPool[i].plus(tradeResult.baseGained));
+
+                numOfTaoInPool.push(new BigNumber(await tao.methods.balanceOf(dvm.options.address).call()));
+                numOfUsdcInPool.push(new BigNumber(await usdc.methods.balanceOf(dvm.options.address).call()));
 			}
 
 			// Save to CSV
-            const headerLine = 'realPrices,numOfTokenInPool,numOfUsdcInPool';
-            const contentLines = Array.from(Array(realPrices.length).keys()).map(i => `${realPrices[i]},${numOfTokenInPool[i]},${numOfUsdcInPool[i]}`);
+            const headerLine = 'realPrices,numOfTaoInPool,numOfUsdcInPool';
+            const contentLines = Array.from(Array(realPrices.length).keys()).map(i => `${realPrices[i]},${numOfTaoInPool[i]},${numOfUsdcInPool[i]}`);
 
             const csv = headerLine + "\n" + contentLines.join("\n");
 			fs.writeFileSync(resultFileName(numOfTrades, startPrice, endPrice), csv);
