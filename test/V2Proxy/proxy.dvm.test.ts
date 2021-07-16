@@ -18,7 +18,7 @@ const numOfTrades = 20;
 // const poolParameter
 // const realPriceRandomFunction Parameter,
 
-const startPrice = 1.1;
+const startPrice = 3;
 const endPrice = 0.6;
 const realPrices = initializeRealPrices(numOfTrades, startPrice, endPrice);
 console.log(realPrices)
@@ -36,8 +36,8 @@ let trader: string;
 
 let config = {
 	lpFeeRate: decimalStr("0.003"),
-	k: decimalStr("1"),
-	i: "1",
+	k: decimalStr("0"),
+	i: decimalStr("1"),
 };
 
 async function init(ctx: ProxyContext): Promise<void> {
@@ -102,15 +102,15 @@ describe("DODOProxyV2.0", () => {
 		);
 		ctx = await getProxyContext(ETH.options.address);
 		await init(ctx);
-		dvm_DODO_USDT = await initCreateDVM(ctx, ctx.DODO.options.address, ctx.USDT.options.address, decimalStr("100000"), decimalStr("100000"), "0", decimalStr("1"));
+		dvm_DODO_USDT = await initCreateDVM(ctx, ctx.DODO.options.address, ctx.USDT.options.address, decimalStr("100000"), decimalStr("100000"), "0", config.i);
 		DVM_DODO_USDT = contracts.getContractWithAddress(contracts.DVM_NAME, dvm_DODO_USDT);
-		dvm_USDT_DODO = await initCreateDVM(ctx, ctx.USDT.options.address, ctx.DODO.options.address, decimalStr("100000"), decimalStr("100000"), "0", decimalStr("1"));
+		dvm_USDT_DODO = await initCreateDVM(ctx, ctx.USDT.options.address, ctx.DODO.options.address, decimalStr("100000"), decimalStr("100000"), "0", config.i);
 		DVM_USDT_DODO = contracts.getContractWithAddress(contracts.DVM_NAME, dvm_USDT_DODO);
-		dvm_USDT_USDC = await initCreateDVM(ctx, ctx.USDC.options.address, ctx.USDT.options.address, decimalStr("100000"), decimalStr("100000"), "0", "1");
+		dvm_USDT_USDC = await initCreateDVM(ctx, ctx.USDC.options.address, ctx.USDT.options.address, decimalStr("100000"), decimalStr("100000"), "0", config.i);
 		DVM_USDT_USDC = contracts.getContractWithAddress(contracts.DVM_NAME, dvm_USDT_USDC);
-		dvm_WETH_USDT = await initCreateDVM(ctx, '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE', ctx.USDT.options.address, decimalStr("5"), mweiStr("3000"), "5", mweiStr("600"));
+		dvm_WETH_USDT = await initCreateDVM(ctx, '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE', ctx.USDT.options.address, decimalStr("5"), mweiStr("3000"), "5", config.i);
 		DVM_WETH_USDT = contracts.getContractWithAddress(contracts.DVM_NAME, dvm_WETH_USDT);
-		dvm_WETH_USDC = await initCreateDVM(ctx, '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE', ctx.USDC.options.address, decimalStr("5"), mweiStr("3000"), "5", mweiStr("600"));
+		dvm_WETH_USDC = await initCreateDVM(ctx, '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE', ctx.USDC.options.address, decimalStr("5"), mweiStr("3000"), "5", config.i);
 		DVM_WETH_USDC = contracts.getContractWithAddress(contracts.DVM_NAME, dvm_WETH_USDC);
 		console.log("dvm_DODO_USDT:", dvm_DODO_USDT);
 		console.log("dvm_USDT_USDC:", dvm_USDT_USDC);
