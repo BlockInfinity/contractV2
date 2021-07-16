@@ -14,15 +14,15 @@ import * as contracts from '../utils/Contracts';
 import { Contract } from 'web3-eth-contract';
 
 const fs = require('fs');
-const numOfTrades = 3;
+const numOfTrades = 2;
 // const poolParameter
 // const realPriceRandomFunction Parameter,
 
 const startPrice = 120;
 const endPrice = 80;
 const realPrices = initializeRealPrices(numOfTrades, startPrice, endPrice);
-const numOfTokenInPool = [0];
-const numOfUsdcInPool = [0];
+const numOfTokenInPool = [new BigNumber(0)];
+const numOfUsdcInPool = [new BigNumber(0)];
 const params = null;
 let dvm;
 let usdc;
@@ -35,7 +35,7 @@ let trader: string;
 
 let config = {
 	lpFeeRate: decimalStr("0.003"),
-	k: decimalStr("0.9"),
+	k: decimalStr("1"),
 	i: "1",
 };
 
@@ -47,11 +47,11 @@ async function init(ctx: ProxyContext): Promise<void> {
 	await ctx.mintTestToken(lp, ctx.DODO, decimalStr("1000000"));
 	await ctx.mintTestToken(project, ctx.DODO, decimalStr("1000000"));
 
-	await ctx.mintTestToken(lp, ctx.USDT, mweiStr("50000000"));
-	await ctx.mintTestToken(project, ctx.USDT, mweiStr("50000000"));
+	await ctx.mintTestToken(lp, ctx.USDT, decimalStr("50000000"));
+	await ctx.mintTestToken(project, ctx.USDT, decimalStr("50000000"));
 
-	await ctx.mintTestToken(lp, ctx.USDC, mweiStr("50000000"));
-	await ctx.mintTestToken(project, ctx.USDC, mweiStr("50000000"));
+	await ctx.mintTestToken(lp, ctx.USDC, decimalStr("50000000"));
+	await ctx.mintTestToken(project, ctx.USDC, decimalStr("50000000"));
 
 	await ctx.approveProxy(lp);
 	await ctx.approveProxy(project);
@@ -85,10 +85,12 @@ describe("DODOProxyV2.0", () => {
 	let snapshotId: string;
 	let ctx: ProxyContext;
 	let dvm_DODO_USDT: string;
+	let dvm_USDT_DODO: string;
 	let dvm_USDT_USDC: string;
 	let dvm_WETH_USDT: string;
 	let dvm_WETH_USDC: string;
 	let DVM_DODO_USDT: Contract;
+	let DVM_USDT_DODO: Contract;
 	let DVM_USDT_USDC: Contract;
 	let DVM_WETH_USDT: Contract;
 	let DVM_WETH_USDC: Contract;
@@ -99,9 +101,11 @@ describe("DODOProxyV2.0", () => {
 		);
 		ctx = await getProxyContext(ETH.options.address);
 		await init(ctx);
-		dvm_DODO_USDT = await initCreateDVM(ctx, ctx.DODO.options.address, ctx.USDT.options.address, decimalStr("100000"), mweiStr("20000"), "0", mweiStr("0.2"));
+		dvm_DODO_USDT = await initCreateDVM(ctx, ctx.DODO.options.address, ctx.USDT.options.address, decimalStr("100000"), decimalStr("100000"), "0", decimalStr("1"));
 		DVM_DODO_USDT = contracts.getContractWithAddress(contracts.DVM_NAME, dvm_DODO_USDT);
-		dvm_USDT_USDC = await initCreateDVM(ctx, ctx.USDT.options.address, ctx.USDC.options.address, mweiStr("5000000"), mweiStr("50000"), "0", config.i);
+		dvm_USDT_DODO = await initCreateDVM(ctx, ctx.USDT.options.address, ctx.DODO.options.address, decimalStr("100000"), decimalStr("100000"), "0", decimalStr("1"));
+		DVM_USDT_DODO = contracts.getContractWithAddress(contracts.DVM_NAME, dvm_USDT_DODO);
+		dvm_USDT_USDC = await initCreateDVM(ctx, ctx.USDC.options.address, ctx.USDT.options.address, decimalStr("100000"), decimalStr("100000"), "0", "1");
 		DVM_USDT_USDC = contracts.getContractWithAddress(contracts.DVM_NAME, dvm_USDT_USDC);
 		dvm_WETH_USDT = await initCreateDVM(ctx, '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE', ctx.USDT.options.address, decimalStr("5"), mweiStr("3000"), "5", mweiStr("600"));
 		DVM_WETH_USDT = contracts.getContractWithAddress(contracts.DVM_NAME, dvm_WETH_USDT);
@@ -127,17 +131,66 @@ describe("DODOProxyV2.0", () => {
 	});
 
 	describe("DODOProxy", () => {
+
+/*
+        it("swap - one jump", async () => {
+            await ctx.mintTestToken(trader, ctx.DODO, decimalStr("1000"));
+            await ctx.mintTestToken(trader, ctx.USDC, decimalStr("1000"));
+            await ctx.mintTestToken(trader, ctx.USDT, decimalStr("1000"));
+
+            var dodoPairs = [
+                dvm_DODO_USDT
+            ]
+            var directions = 0
+
+            await logGas(await ctx.DODOProxyV2.methods.dodoSwapV2TokenToToken(
+                ctx.DODO.options.address,
+                ctx.USDT.options.address,
+                decimalStr("500"),
+                1,
+                dodoPairs,
+                directions,
+                false,
+                Math.floor(new Date().getTime() / 1000 + 60 * 10)
+            ), ctx.sendParam(trader), "swap - one jump first");
+        });
+*/
+
+        it.skip("swap - one jump", async () => {
+            await ctx.mintTestToken(trader, ctx.DODO, decimalStr("1000"));
+            await ctx.mintTestToken(trader, ctx.USDC, decimalStr("1000"));
+            await ctx.mintTestToken(trader, ctx.USDT, decimalStr("1000"));
+
+            var dodoPairs = [
+                dvm_DODO_USDT
+            ]
+            var directions = 1 // Has to be 0 when swapping in the direction of the pair (DODO → USDT for dvm_DODO_USDT), 1 otherwise.
+
+            await logGas(await ctx.DODOProxyV2.methods.dodoSwapV2TokenToToken(
+                ctx.USDT.options.address,
+                ctx.DODO.options.address, // Has to be in the direction of the swap, not in the direction of the DVM setup.
+                decimalStr("500"),
+                1,
+                dodoPairs,
+                directions,
+                false,
+                Math.floor(new Date().getTime() / 1000 + 60 * 10)
+            ), ctx.sendParam(trader), "swap - one jump first");
+        });
+
 		it("benchmarks", async () => {
 
+            const tradeQuantities = [-5000000000, 5000000000];
 			for (let i = 0; i < numOfTrades; i++) {
-				const tradeQuantity = await getQuantity(ctx, dvm, trader, realPrices[i]);
-				const tradeResult = await trade(ctx, dvm, trader, tradeQuantity);
+				//const tradeQuantity = await getQuantity(ctx, dvm, trader, realPrices[i]);
+                const tradeQuantity = tradeQuantities[i];
+				const tradeResult = await trade(ctx, dvm, trader, tradeQuantity, dvm_DODO_USDT);
 
 				// Save tradeResult
                 console.log(tradeQuantity)
                 console.log(tradeResult)
-				numOfTokenInPool.push(numOfTokenInPool[i] + tradeResult.quoteGained);
-				numOfUsdcInPool.push(numOfUsdcInPool[i] + tradeResult.baseGained);
+				numOfTokenInPool.push(numOfTokenInPool[i].plus(tradeResult.quoteGained));
+				numOfUsdcInPool.push(numOfUsdcInPool[i].plus(tradeResult.baseGained));
 			}
             console.log('Saving to CSV file.');
             console.log(numOfTokenInPool)
@@ -247,7 +300,11 @@ function initializePool(numOfUsdcInPool, numOfTokenInPool, params) {
 	return null;
 }
 
-async function trade(ctx, dvm, trader, tradeQuantity) {
+async function trade(ctx, dvm, trader, tradeQuantity, dvm_DODO_USDT) {
+    await ctx.mintTestToken(trader, ctx.DODO, decimalStr("1000"));
+    await ctx.mintTestToken(trader, ctx.USDC, decimalStr("1000"));
+    await ctx.mintTestToken(trader, ctx.USDT, decimalStr("1000"));
+
     if(tradeQuantity == 0)
         return {
             baseGained: 0,
@@ -258,11 +315,17 @@ async function trade(ctx, dvm, trader, tradeQuantity) {
 		{fromToken: usdc, toToken: tao} :
 		{fromToken: tao, toToken: usdc};
 
-    const poolBasePrior = await usdc.methods.balanceOf(dvm.options.address).call();
-    const poolQuotePrior = await tao.methods.balanceOf(dvm.options.address).call();
+    const poolBasePrior = new BigNumber(await usdc.methods.balanceOf(dvm.options.address).call());
+    const poolQuotePrior = new BigNumber(await tao.methods.balanceOf(dvm.options.address).call());
     console.log(`tradeQuantity: ${tradeQuantity}`)
     console.log(`poolBasePrior: ${poolBasePrior}`)
     console.log(`poolQuotePrior: ${poolQuotePrior}`)
+
+    // BEGINNING: check of view function
+    const queryFunction = tradeQuantity < 0 ? dvm.methods.querySellQuote : dvm.methods.querySellBase;
+    const {receiveQuoteAmount, mtFee} = await queryFunction(trader, Math.abs(tradeQuantity)).call();
+    console.log(`View function output: ${receiveQuoteAmount} | ${mtFee}`)
+    // END: check of view function
 
 	const dodoPairs = [
 		dvm.options.address
@@ -271,25 +334,43 @@ async function trade(ctx, dvm, trader, tradeQuantity) {
     console.log(`ctx.DODOProxyV2: ${ctx.DODOProxyV2}`)
     console.log(`ctx.DODOProxyV2.options.address: ${ctx.DODOProxyV2.options.address}`)
     console.log(`trader: ${trader}`)
+/*    console.log(fromToken.options.address,
+		        toToken.options.address,
+		        Math.abs(tradeQuantity),
+		        1,
+		        dodoPairs,
+		        directions,
+		        false,
+		        Math.floor(new Date().getTime() / 1000 + 60 * 10))*/
+    console.log('wtf!?')
+    console.log(decimalStr(Math.abs(tradeQuantity).toString()))
+    console.log(decimalStr("500"))
+    console.log(typeof decimalStr(Math.abs(tradeQuantity).toString()))
+    console.log(typeof decimalStr("500"))
 	await ctx.DODOProxyV2.methods.dodoSwapV2TokenToToken(
 		fromToken.options.address,
 		toToken.options.address,
-		Math.abs(tradeQuantity),
-		0,
+        //tao.options.address,
+        //usdc.options.address,
+        //ctx.DODO.options.address,
+        //ctx.USDT.options.address,
+		(new BigNumber(Math.abs(tradeQuantity).toString())).toString(),
+        //decimalStr("500"),
+		1,
 		dodoPairs,
 		directions,
 		false,
 		Math.floor(new Date().getTime() / 1000 + 60 * 10)
 	).send(ctx.sendParam(trader));
 
-    const poolBasePosterior = await usdc.methods.balanceOf(dvm.options.address).call();
-    const poolQuotePosterior = await tao.methods.balanceOf(dvm.options.address).call();
+    const poolBasePosterior = new BigNumber(await usdc.methods.balanceOf(dvm.options.address).call());
+    const poolQuotePosterior = new BigNumber(await tao.methods.balanceOf(dvm.options.address).call());
     console.log(`poolBasePosterior: ${poolBasePosterior}`)
     console.log(`poolQuotePosterior: ${poolQuotePosterior}`)
 
 	return {
-		baseGained: poolBasePosterior - poolBasePrior,
-		quoteGained: poolQuotePosterior - poolQuotePrior,
+		baseGained: poolBasePosterior.minus(poolBasePrior),
+		quoteGained: poolQuotePosterior.minus(poolQuotePrior),
 	};
 }
 

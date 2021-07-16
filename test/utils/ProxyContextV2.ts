@@ -60,7 +60,7 @@ export class ProxyContext {
 
     this.DODO = await contracts.newContract(
       contracts.MINTABLE_ERC20_CONTRACT_NAME,
-      ["DODO Token", "DODO", 18]
+      ["DODO Token", "DODO", 6]
     );
     this.USDT = await contracts.newContract(
       contracts.MINTABLE_ERC20_CONTRACT_NAME,
