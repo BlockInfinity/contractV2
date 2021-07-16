@@ -187,17 +187,14 @@ describe("DODOProxyV2.0", () => {
 				const tradeResult = await trade(ctx, dvm, trader, tradeQuantity, dvm_DODO_USDT);
 
 				// Save tradeResult
-                console.log(tradeQuantity)
-                console.log(tradeResult)
 				numOfTokenInPool.push(numOfTokenInPool[i].plus(tradeResult.quoteGained));
 				numOfUsdcInPool.push(numOfUsdcInPool[i].plus(tradeResult.baseGained));
 			}
-            console.log('Saving to CSV file.');
-            console.log(numOfTokenInPool)
+
 			// Save to CSV
             const headerLine = 'realPrices,numOfTokenInPool,numOfUsdcInPool';
             const contentLines = Array.from(Array(realPrices.length).keys()).map(i => `${realPrices[i]},${numOfTokenInPool[i]},${numOfUsdcInPool[i]}`);
-            console.log(contentLines)
+
             const csv = headerLine + "\n" + contentLines.join("\n");
 			fs.writeFileSync(resultFileName(numOfTrades, startPrice, endPrice), csv);
 		});
@@ -232,8 +229,7 @@ async function getQuantity(ctx, dvm, trader, price) {
 		else
 			payAmount = 0.9*payAmount;
 		payAmount = Math.floor(payAmount)
-        console.log(`mode: ${mode}`);
-        console.log(`payAmount: ${payAmount}`);
+
         if(payAmount < UNDERFLOW_PROTECTOR)
             return 0;
 
@@ -242,13 +238,10 @@ async function getQuantity(ctx, dvm, trader, price) {
             console.error('receiveQuoteAmount is zero.');
             process.exit(1);
         }
-        console.log(`receiveQuoteAmount: ${receiveQuoteAmount}`);
+
 		priceOfQueriedAmount = (payAmount - mtFee) / receiveQuoteAmount;
 
 		// Check whether the prices are approximately equal.
-        console.log(`price: ${price}`)
-        console.log(`priceOfQueriedAmount: ${priceOfQueriedAmount}`)
-        console.log(`Precision of price: ${Math.abs(price - priceOfQueriedAmount)/price}`)
 		if(Math.abs(price - priceOfQueriedAmount)/price < 0.01) {
             console.log(`Expected loss: ${payAmount}`)
             console.log(`Expected gain: ${receiveQuoteAmount}`)
@@ -331,29 +324,9 @@ async function trade(ctx, dvm, trader, tradeQuantity, dvm_DODO_USDT) {
 		dvm.options.address
 	]
 	const directions = tradeQuantity > 0 ? 0 : 1;
-    console.log(`ctx.DODOProxyV2: ${ctx.DODOProxyV2}`)
-    console.log(`ctx.DODOProxyV2.options.address: ${ctx.DODOProxyV2.options.address}`)
-    console.log(`trader: ${trader}`)
-/*    console.log(fromToken.options.address,
-		        toToken.options.address,
-		        Math.abs(tradeQuantity),
-		        1,
-		        dodoPairs,
-		        directions,
-		        false,
-		        Math.floor(new Date().getTime() / 1000 + 60 * 10))*/
-    console.log('wtf!?')
-    console.log(decimalStr(Math.abs(tradeQuantity).toString()))
-    console.log(decimalStr("500"))
-    console.log(typeof decimalStr(Math.abs(tradeQuantity).toString()))
-    console.log(typeof decimalStr("500"))
 	await ctx.DODOProxyV2.methods.dodoSwapV2TokenToToken(
 		fromToken.options.address,
 		toToken.options.address,
-        //tao.options.address,
-        //usdc.options.address,
-        //ctx.DODO.options.address,
-        //ctx.USDT.options.address,
 		(new BigNumber(Math.abs(tradeQuantity).toString())).toString(),
         //decimalStr("500"),
 		1,
