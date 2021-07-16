@@ -181,12 +181,12 @@ describe("DODOProxyV2.0", () => {
 
 		it("benchmarks", async () => {
 
-            const tradeQuantities = [-5000000000, 5000000000];
 			for (let i = 0; i < numOfTrades; i++) {
-				//const tradeQuantity = await getQuantity(ctx, dvm, trader, realPrices[i]);
-                const tradeQuantity = tradeQuantities[i];
+				const tradeQuantity = await getQuantity(ctx, dvm, trader, realPrices[i]);
+				console.log('!!!!!!!!!!!!!!0')
+				console.log(realPrices[i])
+				console.log(tradeQuantity)
 				const tradeResult = await trade(ctx, dvm, trader, tradeQuantity, dvm_DODO_USDT);
-
 				// Save tradeResult
 				numOfTokenInPool.push(numOfTokenInPool[i].plus(tradeResult.quoteGained));
 				numOfUsdcInPool.push(numOfUsdcInPool[i].plus(tradeResult.baseGained));
@@ -207,17 +207,16 @@ describe("DODOProxyV2.0", () => {
  * trader: address
  * price: int; price = amount base / amount quote
  */
-async function getQuantity(ctx, dvm, trader, price) {
+async function getQuantity(ctx, dvm, trader, price) : Promise<BigNumber> {
 	const UNDERFLOW_PROTECTOR = 10000;
-	let priceOfQueriedAmount = 1;
-	let payAmount = UNDERFLOW_PROTECTOR;
+	let priceOfQueriedAmount = new BigNumber(1);
+	let payAmount = new BigNumber(UNDERFLOW_PROTECTOR);
 
 	// Try to sell 1 base (buying quote) to see whether the asymptotic price is above or below the
 	// intended price.
 	const {receiveQuoteAmount, mtFee} = await dvm.methods.querySellBase(trader, UNDERFLOW_PROTECTOR).call();
 	const mode = receiveQuoteAmount/UNDERFLOW_PROTECTOR > price ? 'sell' : 'buy'; // Sell or buy quote (not base).
 	const queryFunction = mode == 'sell' ? dvm.methods.querySellQuote : dvm.methods.querySellBase;
-
     let i = 1000;
 	while(true) {
 		i--;
@@ -225,14 +224,13 @@ async function getQuantity(ctx, dvm, trader, price) {
             console.error('Too many loop iterations.');
 			process.exit(1);
         }
-		if(price > priceOfQueriedAmount)
-			payAmount = 1.11*payAmount;
+		if((new BigNumber(price)).comparedTo(priceOfQueriedAmount) == 1)
+			payAmount = (new BigNumber(1.11)).times(payAmount);
 		else
-			payAmount = 0.9*payAmount;
-		payAmount = Math.floor(payAmount)
-
-        if(payAmount < UNDERFLOW_PROTECTOR)
-            return 0;
+			payAmount = (new BigNumber(0.9)).times(payAmount);
+		payAmount = payAmount.integerValue(BigNumber.ROUND_FLOOR);
+        if(payAmount.comparedTo(UNDERFLOW_PROTECTOR) == -1)
+            return new BigNumber(0);
 
 		const {receiveQuoteAmount, mtFee} = await queryFunction(trader, payAmount.toString()).call();
         if(receiveQuoteAmount == 0) {
@@ -240,13 +238,13 @@ async function getQuantity(ctx, dvm, trader, price) {
             process.exit(1);
         }
 
-		priceOfQueriedAmount = (payAmount - mtFee) / receiveQuoteAmount;
+		priceOfQueriedAmount = (payAmount.minus(mtFee)).dividedBy(receiveQuoteAmount);
 
 		// Check whether the prices are approximately equal.
-		if(Math.abs(price - priceOfQueriedAmount)/price < 0.01) {
+		if((((new BigNumber(price)).minus(priceOfQueriedAmount)).absoluteValue().dividedBy(new BigNumber(price))).comparedTo(0.01) == -1) {
             console.log(`Expected loss: ${payAmount}`)
             console.log(`Expected gain: ${receiveQuoteAmount}`)
-			return (mode == 'sell' ? -1 : 1) * payAmount;
+			return payAmount.times(mode == 'sell' ? -1 : 1);
         }
 	}
 
@@ -301,18 +299,19 @@ function initializePool(numOfUsdcInPool, numOfTokenInPool, params) {
 	return null;
 }
 
-async function trade(ctx, dvm, trader, tradeQuantity, dvm_DODO_USDT) {
+async function trade(ctx, dvm, trader, tradeQuantity : BigNumber, dvm_DODO_USDT) {
     await ctx.mintTestToken(trader, ctx.DODO, decimalStr("1000"));
     await ctx.mintTestToken(trader, ctx.USDC, decimalStr("1000"));
     await ctx.mintTestToken(trader, ctx.USDT, decimalStr("1000"));
-
-    if(tradeQuantity == 0)
+	console.log('still going')
+	console.log(`my trade quantity: ${tradeQuantity}`)
+	console.log(typeof tradeQuantity)
+    if(tradeQuantity.comparedTo(0) == 0)
         return {
             baseGained: 0,
             quoteGained: 0,
         }
-
-	const {fromToken, toToken} = tradeQuantity > 0 ?
+	const {fromToken, toToken} = tradeQuantity.comparedTo(0) == 1 ?
 		{fromToken: usdc, toToken: tao} :
 		{fromToken: tao, toToken: usdc};
 
@@ -321,33 +320,29 @@ async function trade(ctx, dvm, trader, tradeQuantity, dvm_DODO_USDT) {
     console.log(`tradeQuantity: ${tradeQuantity}`)
     console.log(`poolBasePrior: ${poolBasePrior}`)
     console.log(`poolQuotePrior: ${poolQuotePrior}`)
-
     // BEGINNING: check of view function
-    const queryFunction = tradeQuantity < 0 ? dvm.methods.querySellQuote : dvm.methods.querySellBase;
-    const {receiveQuoteAmount, mtFee} = await queryFunction(trader, Math.abs(tradeQuantity)).call();
+    const queryFunction = tradeQuantity.comparedTo(0) == -1 ? dvm.methods.querySellQuote : dvm.methods.querySellBase;
+    const {receiveQuoteAmount, mtFee} = await queryFunction(trader, tradeQuantity.absoluteValue()).call();
     console.log(`View function output: ${receiveQuoteAmount} | ${mtFee}`)
     // END: check of view function
-
 	const dodoPairs = [
 		dvm.options.address
 	]
-	const directions = tradeQuantity > 0 ? 0 : 1;
+	const directions = tradeQuantity.comparedTo(0) == 1 ? 0 : 1;
 	await ctx.DODOProxyV2.methods.dodoSwapV2TokenToToken(
 		fromToken.options.address,
 		toToken.options.address,
-		(new BigNumber(Math.abs(tradeQuantity).toString())).toString(),
+		tradeQuantity.absoluteValue().toString(),
 		1,
 		dodoPairs,
 		directions,
 		false,
 		Math.floor(new Date().getTime() / 1000 + 60 * 10)
 	).send(ctx.sendParam(trader));
-
     const poolBasePosterior = new BigNumber(await usdc.methods.balanceOf(dvm.options.address).call());
     const poolQuotePosterior = new BigNumber(await tao.methods.balanceOf(dvm.options.address).call());
     console.log(`poolBasePosterior: ${poolBasePosterior}`)
     console.log(`poolQuotePosterior: ${poolQuotePosterior}`)
-
 	return {
 		baseGained: poolBasePosterior.minus(poolBasePrior),
 		quoteGained: poolQuotePosterior.minus(poolQuotePrior),
