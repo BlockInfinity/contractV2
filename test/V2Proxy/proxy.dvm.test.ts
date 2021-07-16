@@ -14,7 +14,7 @@ import * as contracts from '../utils/Contracts';
 import { Contract } from 'web3-eth-contract';
 
 const fs = require('fs');
-const numOfTrades = 100;
+const numOfTrades = 1;
 // const poolParameter
 // const realPriceRandomFunction Parameter,
 
@@ -36,8 +36,8 @@ let trader: string;
 
 let config = {
 	lpFeeRate: decimalStr("0.003"),
-	k: decimalStr("0"),
-	i: decimalStr("1"),
+	k: decimalStr("1"),
+	i: "1",
 };
 
 async function init(ctx: ProxyContext): Promise<void> {
@@ -182,8 +182,9 @@ describe("DODOProxyV2.0", () => {
 		it("benchmarks", async () => {
 
 			for (let i = 0; i < numOfTrades; i++) {
-				/*const tradeQuantity = */await getQuantity(ctx, dvm, trader, realPrices[i]);
-				const tradeQuantity = new BigNumber(-8000);
+				//const tradeQuantity = await getQuantity(ctx, dvm, trader, realPrices[i]);
+				//const tradeQuantity = new BigNumber(-8000);
+				const tradeQuantity = new BigNumber(-5000000000000)
 				console.log('!!!!!!!!!!!!!!0')
 				console.log(realPrices[i])
 				console.log(tradeQuantity)
@@ -226,6 +227,7 @@ async function getQuantity(ctx, dvm, trader, price) : Promise<BigNumber> {
 	while(true) {
 		console.log(`mode: ${mode}`)
 		console.log(`range: [${leftBound}, ${rightBound}]`)
+		console.log(`i: ${i}`)
 		i--;
 		if(i < 0) {
             console.error('Too many loop iterations.');
@@ -237,8 +239,8 @@ async function getQuantity(ctx, dvm, trader, price) : Promise<BigNumber> {
         try {
 		    const {receiveQuoteAmount, mtFee} = await queryFunction(trader, approximateQuantity.toString()).call();
             if(receiveQuoteAmount === undefined || receiveQuoteAmount.comparedTo(0) === 0) {
-                console.error('receiveQuoteAmount is zero.');
-                process.exit(1);
+				console.log('undefinied case')
+				return new BigNumber(0);
             }
 
 		    const priceOfQueriedAmount = (approximateQuantity.minus(mtFee)).dividedBy(receiveQuoteAmount);
@@ -263,7 +265,12 @@ async function getQuantity(ctx, dvm, trader, price) : Promise<BigNumber> {
 				else
 					rightBound = approximateQuantity;
 			}
-			approximateQuantity = leftBound.plus(rightBound).dividedBy(2).integerValue(BigNumber.ROUND_FLOOR);
+			console.log('///////////////////////////')
+			console.log(approximateQuantity)
+			approximateQuantity = (leftBound.plus(rightBound)).dividedBy(2).integerValue(BigNumber.ROUND_FLOOR); // bug is here TODO
+			console.log(approximateQuantity)
+			console.log(leftBound)
+			console.log(rightBound)
         } catch(e) {
             const contractErrorObject = e.data[Object.keys(e.data)[0]];
             if(contractErrorObject.error === 'revert' && contractErrorObject.reason === 'TARGET_IS_ZERO') {
