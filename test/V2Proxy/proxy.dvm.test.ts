@@ -293,7 +293,7 @@ function initializeRealPrices(numOfTrades, startPrice, endPrice) {
 }
 
 function resultFileName(numOfTrades, startPrice, endPrice) {
-	return `${Date.now()}_${numOfTrades}_${startPrice}_${endPrice}`;
+	return `csv/${Date.now()}_${numOfTrades}_${startPrice}_${endPrice}`;
 }
 
 function initializePool(numOfUsdcInPool, numOfTokenInPool, params) {
